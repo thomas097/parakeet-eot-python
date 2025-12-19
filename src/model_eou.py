@@ -52,7 +52,7 @@ class EOUModel:
         Returns:
             EOUModel: Instance of an EOU model.
         """
-        encoder_path = os.path.join(model_dir, "encoder.onnx")
+        encoder_path = os.path.join(model_dir, "encoder_int8.onnx")
         decoder_path = os.path.join(model_dir, "decoder_joint.onnx")
 
         if not os.path.exists(encoder_path) or not os.path.exists(decoder_path):
@@ -62,11 +62,9 @@ class EOUModel:
         
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        sess_options.intra_op_num_threads = 4
-        sess_options.inter_op_num_threads = 1
 
-        providers = ["DnnlExecutionProvider", "CPUExecutionProvider"]
-        if 'cuda' in device.lower():
+        providers = ["CPUExecutionProvider"]
+        if device.lower().startswith('cuda'):
             providers.insert(0, "CUDAExecutionProvider")
 
         encoder_session = ort.InferenceSession(
