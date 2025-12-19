@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import onnxruntime as ort
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from numpy.typing import NDArray
 
 class ModelError(Exception):
@@ -14,11 +14,17 @@ class EncoderCache:
     across chunks during streaming inference.
     """
     # channel cache: [17, 1, 70, 512] - 17 layers, batch=1, 70 frame lookback
-    cache_last_channel: NDArray = np.zeros((17, 1, 70, 512), dtype=np.float32)
+    cache_last_channel: NDArray = field(
+        default_factory=lambda: np.zeros((17, 1, 70, 512), dtype=np.float32)
+    )
     # time cache: [17, 1, 512, 8] - 17 layers, batch=1, fixed 8 time steps
-    cache_last_time: NDArray = np.zeros((17, 1, 512, 8), dtype=np.float32)
+    cache_last_time: NDArray = field(
+        default_factory=lambda: np.zeros((17, 1, 512, 8), dtype=np.float32)
+    )
     # cache length: [1]
-    cache_last_channel_len: NDArray = np.array([0], dtype=np.int64)
+    cache_last_channel_len: NDArray = field(
+        default_factory=lambda: np.array([0], dtype=np.int64)
+    )
 
 
 class EOUModel:
