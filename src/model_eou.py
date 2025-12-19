@@ -3,6 +3,7 @@ import numpy as np
 import onnxruntime as ort
 from dataclasses import dataclass, field
 from numpy.typing import NDArray
+from typing import Optional
 
 class ModelError(Exception):
     pass
@@ -13,15 +14,12 @@ class EncoderCache:
     Encoder state cache to maintain temporal context 
     across chunks during streaming inference.
     """
-    # channel cache: [17, 1, 70, 512] - 17 layers, batch=1, 70 frame lookback
     cache_last_channel: NDArray = field(
         default_factory=lambda: np.zeros((17, 1, 70, 512), dtype=np.float32)
     )
-    # time cache: [17, 1, 512, 8] - 17 layers, batch=1, fixed 8 time steps
     cache_last_time: NDArray = field(
         default_factory=lambda: np.zeros((17, 1, 512, 8), dtype=np.float32)
     )
-    # cache length: [1]
     cache_last_channel_len: NDArray = field(
         default_factory=lambda: np.array([0], dtype=np.int64)
     )
@@ -37,7 +35,7 @@ class EOUModel:
         self.decoder_joint = decoder_session
 
     @classmethod
-    def from_pretrained(cls, model_dir: str, device: str = 'cpu', quant: str = "") -> 'EOUModel':
+    def from_pretrained(cls, model_dir: str, device: str = 'cpu', quant: Optional[str] = None) -> 'EOUModel':
         """
         Convenience method to load an EOU model consisting of an encoder 
         and a joint decoder from an ONNX model directory.
@@ -45,6 +43,7 @@ class EOUModel:
         Args:
             model_dir (str): Path to the model files.
             device (str): Device to use for inference, e.g. 'cpu' (default) or 'cuda'.
+            quant (str): Level of quantization. Defaults to '' (None).
 
         Raises:
             ModelError: When any of the required model files cannot be found.
