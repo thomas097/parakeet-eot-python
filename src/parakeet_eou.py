@@ -51,7 +51,7 @@ class ParakeetEOUModel:
         self._last_token = np.full((1, 1), self._blank_id, dtype=np.int32)
         self._last_non_blank_token = None
 
-        self._mel_basis = self._create_mel_filterbank()
+        self._mels = self._create_mel_filterbank()
         self._window = np.hanning(WIN_LENGTH).astype(np.float32)
         self._buffer = RollingAudioBuffer(maxlen=SAMPLE_RATE * MIN_BUFFER_SIZE)
 
@@ -154,32 +154,32 @@ class ParakeetEOUModel:
         self._state_c.fill(0.0)
         self._last_token.fill(self._blank_id)
 
-    def _extract_mel_features(self, audio: np.ndarray) -> np.ndarray:
+    def _extract_mel_features(self, audio: NDArray) -> NDArray:
         """
         Converts audio samples into log-mel spectrogram features.
 
         Args:
-            audio (np.ndarray): Raw audio waveform.
+            audio (NDArray): Raw audio waveform.
 
         Returns:
-            np.ndarray: Log-mel spectrogram with shape (1, N_MELS, num_frames).
+            NDArray: Log-mel spectrogram with shape (1, N_MELS, num_frames).
         """
         with Timer("extract_mel_features"):
             audio_pre = self._apply_preemphasis(audio)
-            mel = self._mel_basis @ self._stft(audio_pre)
+            mel = self._mels @ self._stft(audio_pre)
             mel_log = np.log(np.maximum(mel, 0.0) + LOG_ZERO_GUARD)
             return mel_log[np.newaxis, :, :]
 
     @staticmethod
-    def _apply_preemphasis(audio: np.ndarray) -> np.ndarray:
+    def _apply_preemphasis(audio: NDArray) -> NDArray:
         """
         Applies a pre-emphasis filter to the audio waveform.
 
         Args:
-            audio (np.ndarray): Raw audio samples.
+            audio (NDArray): Raw audio samples.
 
         Returns:
-            np.ndarray: Audio with pre-emphasis applied.
+            NDArray: Audio with pre-emphasis applied.
         """
         if len(audio) == 0:
             return audio
@@ -189,15 +189,15 @@ class ParakeetEOUModel:
         result[~np.isfinite(result)] = 0.0
         return result
 
-    def _stft(self, audio: np.ndarray) -> np.ndarray:
+    def _stft(self, audio: NDArray) -> NDArray:
         """
         Computes the short-time Fourier transform (STFT) of the audio signal.
 
         Args:
-            audio (np.ndarray): Audio samples.
+            audio (NDArray): Audio samples.
 
         Returns:
-            np.ndarray: Power spectrogram of shape (N_FFT // 2 + 1, num_frames).
+            NDArray: Power spectrogram of shape (N_FFT // 2 + 1, num_frames).
         """
         with Timer("_stft"):
             pad_amount = N_FFT // 2
@@ -214,7 +214,7 @@ class ParakeetEOUModel:
                 writeable=False
             )
 
-            # Windowing (window should be precomputed once as np.ndarray)
+            # Windowing (window should be precomputed once as NDArray)
             windowed = frames * self._window
 
             # Zero-pad to N_FFT
@@ -232,12 +232,12 @@ class ParakeetEOUModel:
             return spec.T.astype(np.float32)
 
     @staticmethod
-    def _create_mel_filterbank() -> np.ndarray:
+    def _create_mel_filterbank() -> NDArray:
         """
         Creates a Mel filterbank for converting FFT bins to Mel-frequency bins.
 
         Returns:
-            np.ndarray: Mel filterbank of shape (N_MELS, N_FFT // 2 + 1).
+            NDArray: Mel filterbank of shape (N_MELS, N_FFT // 2 + 1).
         """
         with Timer("_create_mel_filterbank"):
             num_freqs = N_FFT // 2 + 1

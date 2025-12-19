@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import onnxruntime as ort
-from typing import Optional
 from dataclasses import dataclass
 from numpy.typing import NDArray
 
@@ -110,22 +109,22 @@ class EOUModel:
 
     def run_decoder(
         self,
-        encoder_frame: np.ndarray,
-        last_token: np.ndarray,
-        state_h: np.ndarray,
-        state_c: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        encoder_frame: NDArray,
+        last_token: NDArray,
+        state_h: NDArray,
+        state_c: NDArray,
+    ) -> tuple[NDArray, NDArray, NDArray]:
         """
         Runs the stateful decoder for a single step.
 
         Args:
-            encoder_frame (np.ndarray): Encoder output frame with shape [1, 512, 1].
-            last_token (np.ndarray): Previous token ID with shape [1, 1].
-            state_h (np.ndarray): Previous decoder hidden state with shape [1, 1, 640].
-            state_c (np.ndarray): Previous decoder cell state with shape [1, 1, 640].
+            encoder_frame (NDArray): Encoder output frame with shape [1, 512, 1].
+            last_token (NDArray): Previous token ID with shape [1, 1].
+            state_h (NDArray): Previous decoder hidden state with shape [1, 1, 640].
+            state_c (NDArray): Previous decoder cell state with shape [1, 1, 640].
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray]:
+            Tuple[NDArray, NDArray, NDArray]:
                 - Logits with shape [1, 1, vocab].
                 - Updated hidden state with shape [1, 1, 640].
                 - Updated cell state with shape [1, 1, 640].
