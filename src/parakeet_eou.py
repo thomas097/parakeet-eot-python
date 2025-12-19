@@ -217,7 +217,7 @@ class ParakeetEOUModel:
                     break
 
                 output_logits.append(vocab)
-                output_tokens.append(self._tokenizer.id_to_token(max_idx))
+                output_tokens.append(max_idx)
 
                 self._state_h = new_h
                 self._state_c = new_c
