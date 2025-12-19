@@ -1,6 +1,7 @@
 import math
 import numpy as np
-from scipy.fft import fft
+from scipy.fft import fft, rfft
+from numpy.lib.stride_tricks import as_strided
 from collections import deque
 from numpy.typing import NDArray
 from .model_eou import EOUModel, EncoderCache
@@ -129,22 +130,37 @@ class ParakeetEOUModel:
         return result
 
     def stft(self, audio: np.ndarray) -> np.ndarray:
-        with Timer("extract_mel_features"):
+        with Timer("stft"):
             pad_amount = N_FFT // 2
-            padded_audio = np.pad(audio, (pad_amount, pad_amount), mode='constant')
-            num_frames = 1 + (len(padded_audio) - WIN_LENGTH) // HOP_LENGTH
-            freq_bins = N_FFT // 2 + 1
-            spec = np.zeros((freq_bins, num_frames), dtype=np.float32)
+            padded_audio = np.pad(audio, (pad_amount, pad_amount))
 
-            for frame_idx in range(num_frames):
-                start = frame_idx * HOP_LENGTH
-                if start + WIN_LENGTH > len(padded_audio):
-                    break
-                windowed = padded_audio[start:start+WIN_LENGTH] * np.array(self.window)
-                fft_frame = fft(np.pad(windowed, (0, N_FFT - WIN_LENGTH)))
-                mag_sq = np.absolute(fft_frame[:freq_bins]) ** 2 #type:ignore
-                spec[:, frame_idx] = np.where(np.isfinite(mag_sq), mag_sq, 0.0)
-            return spec
+            num_frames = 1 + (len(padded_audio) - WIN_LENGTH) // HOP_LENGTH
+
+            # Create strided frame view: shape (num_frames, WIN_LENGTH)
+            frames = as_strided(
+                padded_audio,
+                shape=(num_frames, WIN_LENGTH),
+                strides=(padded_audio.strides[0] * HOP_LENGTH,
+                        padded_audio.strides[0]),
+                writeable=False
+            )
+
+            # Windowing (window should be precomputed once as np.ndarray)
+            windowed = frames * self.window
+
+            # Zero-pad to N_FFT
+            if WIN_LENGTH < N_FFT:
+                pad_width = ((0, 0), (0, N_FFT - WIN_LENGTH))
+                windowed = np.pad(windowed, pad_width)
+
+            # Batched real FFT
+            fft_frames = rfft(windowed, axis=1)
+
+            # Power spectrum
+            spec = np.abs(fft_frames) ** 2 #type:ignore
+
+            # Transpose to match your original output shape
+            return spec.T.astype(np.float32)
 
     @staticmethod
     def create_window() -> np.ndarray:

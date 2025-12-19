@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 
 logging.basicConfig(
-    filename=f"logs/{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.log",
+    filename=f"logs/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
