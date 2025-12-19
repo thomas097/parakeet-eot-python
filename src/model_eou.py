@@ -62,11 +62,12 @@ class EOUModel:
         
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        sess_options.intra_op_num_threads = 4
+        sess_options.inter_op_num_threads = 1
 
+        providers = ["DnnlExecutionProvider", "CPUExecutionProvider"]
         if 'cuda' in device.lower():
-            providers = ['CUDAExecutionProvider']
-        else:
-            providers = ['CPUExecutionProvider']
+            providers.insert(0, "CUDAExecutionProvider")
 
         encoder_session = ort.InferenceSession(
             path_or_bytes=encoder_path, 

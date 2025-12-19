@@ -10,7 +10,7 @@ from .tokenizer import ParakeetTokenizer
 from .utils import Timer
 
 SAMPLE_RATE = 16000
-MIN_BUFFER_SIZE = 3
+MIN_BUFFER_SIZE = .5
 MAX_BUFFER_SIZE = 6
 PRE_ENCODE_CACHE = 9
 FRAMES_PER_CHUNK = 16

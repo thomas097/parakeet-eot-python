@@ -14,7 +14,7 @@ recorder = AudioRecorder(
     )
 recorder.start()
 
-print("Say something!\n")
+print("Say something!")
 
 # Process in 160ms chunks for streaming
 text_output = ""
