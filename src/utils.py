@@ -1,8 +1,9 @@
 import time
 import logging
+from datetime import datetime
 
 logging.basicConfig(
-    filename="timing.log",
+    filename=f"logs/{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
