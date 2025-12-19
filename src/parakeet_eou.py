@@ -209,7 +209,6 @@ class ParakeetEOUModel:
                 max_idx = int(np.argmax(np.where(np.isfinite(vocab), vocab, -np.inf)))
 
                 if max_idx == self._eou_id:
-                    self._last_non_blank_token = self._eou_id
                     break
 
                 if max_idx in (self._blank_id, 0):
@@ -223,7 +222,6 @@ class ParakeetEOUModel:
                 self._state_h = new_h
                 self._state_c = new_c
                 self._last_token.fill(max_idx)
-                self._last_non_blank_token = max_idx
                 syms_added += 1
 
         return output_tokens, output_logits
@@ -268,6 +266,7 @@ class ParakeetEOUModel:
         self._state_h.fill(0.0)
         self._state_c.fill(0.0)
         self._last_token.fill(self._blank_id)
+        self._last_non_blank_token = None
 
     def _extract_mel_features(self, audio: NDArray) -> NDArray:
         """
