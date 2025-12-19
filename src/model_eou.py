@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import onnxruntime as ort
+from typing import Optional
 from dataclasses import dataclass
 from numpy.typing import NDArray
 
@@ -10,8 +11,8 @@ class ModelError(Exception):
 @dataclass
 class EncoderCache:
     """
-    Encoder cache state for streaming inference.
-    Maintains temporal context across chunks.
+    Encoder state cache to maintain temporal context 
+    across chunks during streaming inference.
     """
     # channel cache: [17, 1, 70, 512] - 17 layers, batch=1, 70 frame lookback
     cache_last_channel: NDArray = np.zeros((17, 1, 70, 512), dtype=np.float32)
@@ -31,7 +32,21 @@ class EOUModel:
         self.decoder_joint = decoder_session
 
     @classmethod
-    def from_pretrained(cls, model_dir, exec_config=None) -> 'EOUModel':
+    def from_pretrained(cls, model_dir: str, exec_config: Optional[dict] = None) -> 'EOUModel':
+        """
+        Convenience method to load an EOU model consisting of an encoder 
+        and a joint decoder from an ONNX model directory.
+
+        Args:
+            model_dir (str): Path to the model files.
+            exec_config (Optional[dict], optional): ONNX session configuration. Defaults to None.
+
+        Raises:
+            ModelError: When any of the required model files cannot be found.
+
+        Returns:
+            EOUModel: Instance of an EOU model.
+        """
         encoder_path = os.path.join(model_dir, "encoder.onnx")
         decoder_path = os.path.join(model_dir, "decoder_joint.onnx")
 
@@ -98,7 +113,8 @@ class EOUModel:
         state_h: np.ndarray,
         state_c: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Runs the stateful decoder for a single step.
+        """
+        Runs the stateful decoder for a single step.
 
         Args:
             encoder_frame (np.ndarray): Encoder output frame with shape [1, 512, 1].
