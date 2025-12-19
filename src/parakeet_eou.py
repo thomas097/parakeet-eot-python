@@ -67,7 +67,7 @@ class ParakeetEOUModel:
             )
 
     @classmethod
-    def from_pretrained(cls, path: str, device: str) -> 'ParakeetEOUModel':
+    def from_pretrained(cls, path: str, device: str = 'cpu') -> 'ParakeetEOUModel':
         """
         Loads a pre-trained ParakeetEOUModel from the specified path.
 

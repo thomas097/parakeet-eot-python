@@ -3,7 +3,7 @@ from src import ParakeetEOUModel
 from scipy.io import wavfile
 
 # Load model and tokenizer
-parakeet = ParakeetEOUModel.from_pretrained("checkpoints/parakeet-eou", device='cuda')
+parakeet = ParakeetEOUModel.from_pretrained("checkpoints/parakeet-eou", device='cpu')
 
 # Prepare recording device
 _, audio = wavfile.read("audio_samples/frankly_my_dear_16kHz.wav")
