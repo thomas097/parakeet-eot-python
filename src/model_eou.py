@@ -37,7 +37,7 @@ class EOUModel:
         self.decoder_joint = decoder_session
 
     @classmethod
-    def from_pretrained(cls, model_dir: str, device: str = 'cpu') -> 'EOUModel':
+    def from_pretrained(cls, model_dir: str, device: str = 'cpu', quant: str = "") -> 'EOUModel':
         """
         Convenience method to load an EOU model consisting of an encoder 
         and a joint decoder from an ONNX model directory.
@@ -52,12 +52,13 @@ class EOUModel:
         Returns:
             EOUModel: Instance of an EOU model.
         """
-        encoder_path = os.path.join(model_dir, "encoder_int8.onnx")
+        encoder_file = f"encoder{'_' + quant if quant else ''}.onnx"
+        encoder_path = os.path.join(model_dir, encoder_file)
         decoder_path = os.path.join(model_dir, "decoder_joint.onnx")
 
         if not os.path.exists(encoder_path) or not os.path.exists(decoder_path):
             raise ModelError(
-                f"Missing ONNX files in {model_dir}. Expected encoder.onnx and decoder_joint.onnx"
+                f"Missing ONNX files in {model_dir}. Expected {encoder_file} and decoder_joint.onnx"
             )
         
         sess_options = ort.SessionOptions()

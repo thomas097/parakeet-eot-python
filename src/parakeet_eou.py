@@ -67,7 +67,7 @@ class ParakeetEOUModel:
             )
 
     @classmethod
-    def from_pretrained(cls, path: str, device: str = 'cpu') -> 'ParakeetEOUModel':
+    def from_pretrained(cls, path: str, device: str = 'cpu', quant: str = "") -> 'ParakeetEOUModel':
         """
         Loads a pre-trained ParakeetEOUModel from the specified path.
 
@@ -79,7 +79,7 @@ class ParakeetEOUModel:
             ParakeetEOUModel: An instance of the model initialized with pre-trained weights.
         """
         tokenizer = ParakeetTokenizer.from_pretrained(path)
-        model = EOUModel.from_pretrained(path, device=device)
+        model = EOUModel.from_pretrained(path, device=device, quant=quant)
         return cls(model=model, tokenizer=tokenizer)
 
     def transcribe(self, chunk: NDArray) -> str:

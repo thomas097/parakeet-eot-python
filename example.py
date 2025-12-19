@@ -1,7 +1,11 @@
 from src import ParakeetEOUModel, AudioBuffer, AudioRecorder
 
 # Load model and tokenizer
-parakeet = ParakeetEOUModel.from_pretrained("checkpoints/parakeet-eou")
+parakeet = ParakeetEOUModel.from_pretrained(
+    path="checkpoints/parakeet-eou",
+    device="cpu",
+    quant="uint8"
+    )
 
 # Prepare recording device
 buffer = AudioBuffer()
@@ -13,8 +17,6 @@ recorder = AudioRecorder(
     chunk_size=2560 # 160ms
     )
 recorder.start()
-
-print("Say something!")
 
 # Process in 160ms chunks for streaming
 text_output = ""
