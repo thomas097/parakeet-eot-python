@@ -1,6 +1,6 @@
 from src import ParakeetEOUModel, AudioBuffer, AudioRecorder
 
-# Load model and tokenizer
+# Load quantized model and tokenizer
 parakeet = ParakeetEOUModel.from_pretrained(
     path="checkpoints/parakeet-eou",
     device="cpu",
@@ -11,7 +11,7 @@ parakeet = ParakeetEOUModel.from_pretrained(
 buffer = AudioBuffer()
 recorder = AudioRecorder(
     buffer=buffer,
-    samplerate=16_000,
+    samplerate=16000,
     channels=1,
     dtype="float32",
     chunk_size=2560 # 160ms

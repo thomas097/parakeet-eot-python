@@ -97,7 +97,7 @@ def main():
     args.model = input("Path to model: ")
 
     model_path = args.model
-    output_path = args.output or model_path.replace(".onnx", "_int8.onnx")
+    output_path = args.output or model_path.replace(".onnx", "_uint8.onnx")
 
     list_ops(args.model)
 

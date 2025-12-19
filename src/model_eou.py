@@ -52,13 +52,13 @@ class EOUModel:
         Returns:
             EOUModel: Instance of an EOU model.
         """
-        encoder_file = f"encoder{'_' + quant if quant else ''}.onnx"
-        encoder_path = os.path.join(model_dir, encoder_file)
-        decoder_path = os.path.join(model_dir, "decoder_joint.onnx")
+        quant_suffix = '_' + quant if quant else ''
+        encoder_path = os.path.join(model_dir, f"encoder{quant_suffix}.onnx")
+        decoder_path = os.path.join(model_dir, f"decoder_joint{quant_suffix}.onnx")
 
         if not os.path.exists(encoder_path) or not os.path.exists(decoder_path):
             raise ModelError(
-                f"Missing ONNX files in {model_dir}. Expected {encoder_file} and decoder_joint.onnx"
+                f"Missing ONNX files in '{model_dir}'. Expected '{os.path.basename(encoder_path)}' and '{os.path.basename(decoder_path)}'"
             )
         
         sess_options = ort.SessionOptions()
