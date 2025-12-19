@@ -9,9 +9,10 @@ logging.basicConfig(
 )
 
 class Timer:
-    def __init__(self, label=None, logger=None):
+    def __init__(self, label=None, logger=None, verbose: bool = False):
         self.label = label
         self.logger = logger or logging.getLogger(__name__)
+        self._verbose = verbose
 
     def __enter__(self):
         self.start = time.perf_counter()
@@ -22,4 +23,8 @@ class Timer:
         self.elapsed = end - self.start
 
         name = f"[{self.label}] " if self.label else ""
-        self.logger.info("%sElapsed time: %.6f seconds", name, self.elapsed)
+        msg = f"{name}Elapsed time: {self.elapsed:.6f} seconds"
+        self.logger.info(msg)
+
+        if self._verbose:
+            print(msg)
