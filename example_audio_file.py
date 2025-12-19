@@ -10,5 +10,6 @@ _, audio = wavfile.read("audio_samples/frankly_my_dear_16kHz.wav")
 audio = audio.flatten().astype(np.float32) / np.max(np.absolute(audio))
 
 # Process in 160ms chunks for streaming
-result = parakeet.transcribe_audio(audio)
-print(result)
+tokens, logits = parakeet.transcribe_audio(audio)
+print(tokens)
+print(logits)

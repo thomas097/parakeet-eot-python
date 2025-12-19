@@ -154,7 +154,7 @@ class ParakeetEOUModel:
 
         return text_output
     
-    def _transcribe_with_logits_output(self, chunk: NDArray) -> list[NDArray]:
+    def _transcribe_with_logits_output(self, chunk: NDArray) -> tuple[list[str], list[NDArray]]:
         """
         Transcribes a chunk of audio into a sequence of token logits.
 
@@ -162,12 +162,14 @@ class ParakeetEOUModel:
             chunk (NDArray): Audio samples to be transcribed.
 
         Returns:
-            list[NDArray]: Output logits of decoder for current chunk.
+            A tuple with:
+                list[str]: Output tokens for the current chunk.
+                list[NDArray]: Output logits of decoder for current chunk.
         """
         self._buffer.extend(chunk.flatten())
 
         if not self._buffer.is_minlen():
-            return []
+            return [], []
 
         audio_data = np.array(self._buffer, dtype=np.float32)
         full_features = self._extract_mel_features(audio_data)
@@ -186,9 +188,10 @@ class ParakeetEOUModel:
 
         total_frames = encoder_out.shape[2]
         if total_frames == 0:
-            return []
+            return [], []
 
         output_logits = []
+        output_tokens = []
         for t in range(total_frames):
             current_frame = encoder_out[:, :, t:t+1]
 
@@ -214,7 +217,8 @@ class ParakeetEOUModel:
                 if max_idx >= self._tokenizer.get_vocab_size():
                     break
 
-                output_logits.append(self._tokenizer.id_to_token(max_idx))
+                output_logits.append(vocab)
+                output_tokens.append(self._tokenizer.id_to_token(max_idx))
 
                 self._state_h = new_h
                 self._state_c = new_c
@@ -222,9 +226,9 @@ class ParakeetEOUModel:
                 self._last_non_blank_token = max_idx
                 syms_added += 1
 
-        return output_logits
+        return output_tokens, output_logits
     
-    def transcribe_audio(self, audio: NDArray) -> list[list[NDArray]]:
+    def transcribe_audio(self, audio: NDArray) -> tuple[list, list]:
         """
         Conveience functin to transcribe an entire audio waveform.
 
@@ -232,7 +236,9 @@ class ParakeetEOUModel:
             audio (NDArray): Audio waveform of shape (n_samples).
 
         Returns:
-            list[list[NDArray]]: List of per chunk logits.
+            A tuple with:
+                list[list[str]]: List of per chunk tokens.
+                list[list[NDArray]]: List of per chunk logits.
         """
         assert audio.ndim == 1
 
@@ -244,12 +250,14 @@ class ParakeetEOUModel:
 
         # The real deal
         chunk_logits = []
+        chunk_tokens = []
         for i in range(0, len(audio), SAMPLES_PER_CHUNK):
             chunk = audio[i:i + SAMPLES_PER_CHUNK]
-            logits = self._transcribe_with_logits_output(chunk)
+            tokens, logits = self._transcribe_with_logits_output(chunk)
             chunk_logits.append(logits)
+            chunk_tokens.append(tokens)
 
-        return chunk_logits
+        return chunk_tokens, chunk_logits
     
     def reset_states(self):
         """
