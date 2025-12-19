@@ -134,6 +134,9 @@ class ParakeetEOUModel:
                 max_idx = int(np.argmax(np.where(np.isfinite(vocab), vocab, -np.inf)))
 
                 if max_idx == self._eou_id:
+                    # When [EOU] was emitted before, do not emit again.
+                    if self._last_non_blank_token == self._eou_id:
+                        break
                     self._last_non_blank_token = self._eou_id
                     return text_output + " [EOU]"
 

@@ -27,8 +27,6 @@ while recorder.is_recording():
         text_output += text
 
         if "[EOU]" in text:
-            parakeet.reset_states()
-            buffer.clear()
             print()
 
         if "stop" in text:
