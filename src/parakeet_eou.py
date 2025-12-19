@@ -10,9 +10,11 @@ from .tokenizer import ParakeetTokenizer
 from .utils import Timer
 
 SAMPLE_RATE = 16000
-MIN_BUFFER_SIZE = 6
+MIN_BUFFER_SIZE = 3
+MAX_BUFFER_SIZE = 6
 PRE_ENCODE_CACHE = 9
 FRAMES_PER_CHUNK = 16
+SAMPLES_PER_CHUNK = 2560
 N_FFT = 512
 WIN_LENGTH = 400
 HOP_LENGTH = 160
@@ -20,15 +22,21 @@ N_MELS = 128
 PREEMPH = 0.97
 LOG_ZERO_GUARD = 5.9604645e-8
 FMAX = 8000.0
+MAX_SYMBOLS = 4
 
 
 class RollingAudioBuffer(deque):
-    def __init__(self, maxlen: int):
+    def __init__(self, minlen: int, maxlen: int):
         super().__init__(maxlen=maxlen)
+        self._minlen = minlen
         self._maxlen = maxlen
 
-    def is_full(self) -> bool:
+    def is_minlen(self) -> bool:
+        return len(self) >= self._minlen
+
+    def is_max_len(self) -> bool:
         return len(self) == self._maxlen
+
 
 class ParakeetEOUModel:
     def __init__(self, model: EOUModel, tokenizer: ParakeetTokenizer):
@@ -53,21 +61,25 @@ class ParakeetEOUModel:
 
         self._mels = self._create_mel_filterbank()
         self._window = np.hanning(WIN_LENGTH).astype(np.float32)
-        self._buffer = RollingAudioBuffer(maxlen=SAMPLE_RATE * MIN_BUFFER_SIZE)
+        self._buffer = RollingAudioBuffer(
+            minlen=int(SAMPLE_RATE * MIN_BUFFER_SIZE),
+            maxlen=int(SAMPLE_RATE * MAX_BUFFER_SIZE)
+            )
 
     @classmethod
-    def from_pretrained(cls, path: str) -> 'ParakeetEOUModel':
+    def from_pretrained(cls, path: str, device: str) -> 'ParakeetEOUModel':
         """
         Loads a pre-trained ParakeetEOUModel from the specified path.
 
         Args:
             path (str): Path to the pre-trained model and tokenizer.
+            device (str): Device to use for inference, e.g. 'cpu' (default) or 'cuda'.
 
         Returns:
             ParakeetEOUModel: An instance of the model initialized with pre-trained weights.
         """
         tokenizer = ParakeetTokenizer.from_pretrained(path)
-        model = EOUModel.from_pretrained(path)
+        model = EOUModel.from_pretrained(path, device=device)
         return cls(model=model, tokenizer=tokenizer)
 
     def transcribe(self, chunk: NDArray) -> str:
@@ -82,7 +94,7 @@ class ParakeetEOUModel:
         """
         self._buffer.extend(chunk.flatten())
 
-        if not self._buffer.is_full():
+        if not self._buffer.is_minlen():
             return ""
 
         audio_data = np.array(self._buffer, dtype=np.float32)
@@ -109,7 +121,7 @@ class ParakeetEOUModel:
             current_frame = encoder_out[:, :, t:t+1]
 
             syms_added = 0
-            while syms_added < 5:
+            while syms_added < MAX_SYMBOLS:
                 with Timer("model.run_decoder"):
                     logits, new_h, new_c = self._model.run_decoder(
                         encoder_frame=current_frame, 
@@ -122,8 +134,6 @@ class ParakeetEOUModel:
                 max_idx = int(np.argmax(np.where(np.isfinite(vocab), vocab, -np.inf)))
 
                 if max_idx == self._eou_id:
-                    if self._last_non_blank_token == self._eou_id:
-                        break
                     self._last_non_blank_token = self._eou_id
                     return text_output + " [EOU]"
 
@@ -143,7 +153,104 @@ class ParakeetEOUModel:
                 syms_added += 1
 
         return text_output
+    
+    def _transcribe_with_logits_output(self, chunk: NDArray) -> list[NDArray]:
+        """
+        Transcribes a chunk of audio into a sequence of token logits.
 
+        Args:
+            chunk (NDArray): Audio samples to be transcribed.
+
+        Returns:
+            list[NDArray]: Output logits of decoder for current chunk.
+        """
+        self._buffer.extend(chunk.flatten())
+
+        if not self._buffer.is_minlen():
+            return []
+
+        audio_data = np.array(self._buffer, dtype=np.float32)
+        full_features = self._extract_mel_features(audio_data)
+        total_frames = full_features.shape[2]
+        start_frame = max(0, total_frames - PRE_ENCODE_CACHE - FRAMES_PER_CHUNK)
+
+        features = full_features[:, :, start_frame:]
+        time_steps = features.shape[2]
+
+        with Timer("model.run_encoder"):
+            encoder_out, self._encoder_cache = self._model.run_encoder(
+                features=features, 
+                length=time_steps, 
+                cache=self._encoder_cache
+                )
+
+        total_frames = encoder_out.shape[2]
+        if total_frames == 0:
+            return []
+
+        output_logits = []
+        for t in range(total_frames):
+            current_frame = encoder_out[:, :, t:t+1]
+
+            syms_added = 0
+            while syms_added < MAX_SYMBOLS:
+                with Timer("model.run_decoder"):
+                    logits, new_h, new_c = self._model.run_decoder(
+                        encoder_frame=current_frame, 
+                        last_token=self._last_token, 
+                        state_h=self._state_h, 
+                        state_c=self._state_c
+                    )
+
+                vocab = logits[0, 0, :]
+                max_idx = int(np.argmax(np.where(np.isfinite(vocab), vocab, -np.inf)))
+
+                if max_idx == self._eou_id:
+                    self._last_non_blank_token = self._eou_id
+                    break
+
+                if max_idx in (self._blank_id, 0):
+                    break
+                if max_idx >= self._tokenizer.get_vocab_size():
+                    break
+
+                output_logits.append(self._tokenizer.id_to_token(max_idx))
+
+                self._state_h = new_h
+                self._state_c = new_c
+                self._last_token.fill(max_idx)
+                self._last_non_blank_token = max_idx
+                syms_added += 1
+
+        return output_logits
+    
+    def transcribe_audio(self, audio: NDArray) -> list[list[NDArray]]:
+        """
+        Conveience functin to transcribe an entire audio waveform.
+
+        Args:
+            audio (NDArray): Audio waveform of shape (n_samples).
+
+        Returns:
+            list[list[NDArray]]: List of per chunk logits.
+        """
+        assert audio.ndim == 1
+
+        # Warmup
+        self.reset_states()
+        n_warm_up_chunks = int(MIN_BUFFER_SIZE * SAMPLE_RATE / SAMPLES_PER_CHUNK)
+        for i in range(n_warm_up_chunks):
+            logits = self._transcribe_with_logits_output(np.zeros(SAMPLES_PER_CHUNK, dtype=np.float32))
+
+        # The real deal
+        chunk_logits = []
+        for i in range(0, len(audio), SAMPLES_PER_CHUNK):
+            chunk = audio[i:i + SAMPLES_PER_CHUNK]
+            logits = self._transcribe_with_logits_output(chunk)
+            chunk_logits.append(logits)
+
+        return chunk_logits
+    
     def reset_states(self):
         """
         Resets the decoder states to their initial values.

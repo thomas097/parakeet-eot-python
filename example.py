@@ -13,6 +13,7 @@ recorder = AudioRecorder(
     chunk_size=2560 # 160ms
     )
 recorder.start()
+
 print("Say something!\n")
 
 # Process in 160ms chunks for streaming

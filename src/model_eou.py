@@ -31,13 +31,14 @@ class EOUModel:
         self.decoder_joint = decoder_session
 
     @classmethod
-    def from_pretrained(cls, model_dir: str) -> 'EOUModel':
+    def from_pretrained(cls, model_dir: str, device: str = 'cpu') -> 'EOUModel':
         """
         Convenience method to load an EOU model consisting of an encoder 
         and a joint decoder from an ONNX model directory.
 
         Args:
             model_dir (str): Path to the model files.
+            device (str): Device to use for inference, e.g. 'cpu' (default) or 'cuda'.
 
         Raises:
             ModelError: When any of the required model files cannot be found.
@@ -56,13 +57,20 @@ class EOUModel:
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
+        if 'cuda' in device.lower():
+            providers = ['CUDAExecutionProvider']
+        else:
+            providers = ['CPUExecutionProvider']
+
         encoder_session = ort.InferenceSession(
             path_or_bytes=encoder_path, 
+            providers=providers,
             sess_options=sess_options
             )
 
         decoder_session = ort.InferenceSession(
             path_or_bytes=decoder_path, 
+            providers=providers,
             sess_options=sess_options
             )
 
