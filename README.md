@@ -4,7 +4,6 @@ An optimized Python implementation of the **Parakeet Realtime EOU-120M** streami
 
 Pyrakeet converts the original model to **ONNX** to enable cross-platform deployment and supports **UInt8 quantization** for ultra-low-latency, real-time speech recognition — facilitating efficient inference, even on low-resource, CPU-only devices.
 
----
 
 ## 📌 Overview
 
@@ -20,7 +19,6 @@ The main goals of this project are:
 
 This makes Pyrakeet ideal for local voice assistants and interactive applications. 
 
----
 
 ## 🚀 Getting Started
 
@@ -62,7 +60,7 @@ python scripts/quantize_onnx_partial_uint8.py
 
 When prompted to provide a model path, specify the relative path from the root of the project to the model file. For example, `checkpoints/parakeet-eou/encoder.onnx`.
 
----
+
 
 ### 🧪 Dependencies
 
@@ -82,7 +80,7 @@ onnxruntime-tools==1.7.0
 
 Using these versions is recommended for reproducible results.
 
----
+
 
 ## ▶️ Usage
 
@@ -98,7 +96,7 @@ This will:
 * 🔊 Perform streaming ASR
 * 📝 Emit transcriptions when an end-of-utterance is detected
 
----
+
 
 ### Advanced Usage
 
@@ -122,7 +120,7 @@ for chunk in audio:
 
 The model maintains its internal state automatically — no need to manage it explicitly when calling `.transcribe()`.
 
----
+
 
 ## 🙏 Attribution
 
@@ -131,7 +129,6 @@ The model maintains its internal state automatically — no need to manage it ex
 
 All rights to the original, full-precision *Parakeet EOU 120M v1* model belong to NVIDIA.
 
----
 
 ## 📄 License
 
