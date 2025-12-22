@@ -2,7 +2,7 @@
 
 An optimized Python implementation of the **Parakeet Realtime EOU-120M** streaming ASR model by NVIDIA.
 
-Pyrakeet converts the original model to **ONNX** to enable cross-platform deployment and supports **UInt8 quantization** for ultra-low-latency, real-time speech recognition — ensuring efficient inference, even on low-resource devices.
+Pyrakeet converts the original model to **ONNX** to enable cross-platform deployment and supports **UInt8 quantization** for ultra-low-latency, real-time speech recognition — ensuring efficient inference even on low-resource devices.
 
 
 ## 📌 Overview
@@ -63,7 +63,7 @@ When prompted to provide a model path, specify the relative path from the root o
 
 ### 🧪 Dependencies
 
-The project has been tested with the following dependencies:
+The project has been tested extensively with the following dependencies:
 
 ```bash
 tokenizers==0.19.1
@@ -76,9 +76,6 @@ onnxruntime==1.19.2
 onnx==1.20.0
 onnxruntime-tools==1.7.0
 ```
-
-Using these versions is recommended for reproducible results.
-
 
 ## ▶️ Usage
 
@@ -129,8 +126,6 @@ All rights to the original, full-precision model belong to NVIDIA.
 
 ## 📄 License
 
-The source code is distributed under the **Apache 2.0 License**.
-
-The Parakeet EOU 120M model itself is governed by **NVIDIA’s Open Model licensing terms**.
-For details, see the LICENSE-NVIDIA file or visit the
-[NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/).
+The source code is distributed under the **Apache 2.0 License**. The Parakeet Realtime EOU 120M-v1 model itself is governed by **NVIDIA’s Open Model licensing terms**.
+For details, see LICENSE-NVIDIA-OPEN-MODEL or visit the
+[NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) page.
