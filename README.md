@@ -1,8 +1,8 @@
-# 🐦 Pyrakeet
+# 🐦 Parakeet ONNX
 
 An optimized Python implementation of the **Parakeet Realtime EOU-120M** streaming ASR model by NVIDIA.
 
-Pyrakeet converts the original model to **ONNX** to enable cross-platform deployment and supports **UInt8 quantization** for ultra-low-latency, real-time speech recognition — ensuring efficient inference even on low-resource devices.
+Parakeet ONNX converts the original model to **ONNX** to enable cross-platform deployment and supports **UInt8 quantization** for ultra-low-latency, real-time speech recognition — ensuring efficient inference even on low-resource devices.
 
 
 ## 📌 Overview
@@ -17,7 +17,7 @@ The main goals of this project are:
 - 🎮 CUDA support (for non-quantized model only)  
 - ✋ Improve the model's built-in end-of-utterance (EOU) detection by modifying the decoding strategy  
 
-This makes Pyrakeet ideal for local voice assistants and interactive applications. 
+This makes Parakeet ONNX ideal for local voice assistants and interactive applications. 
 
 
 ## 🚀 Getting Started
@@ -27,8 +27,8 @@ This makes Pyrakeet ideal for local voice assistants and interactive application
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/thomas097/parakeet-eot-python.git
-cd parakeet-eot-python
+git clone https://github.com/thomas097/parakeet-ONNX.git
+cd parakeet-onnx
 ````
 
 2. Create and activate a virtual environment (recommended):
